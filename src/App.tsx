@@ -1,47 +1,27 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/api/dialog";
-import "github-markdown-css/github-markdown-light.css";
-
-function makeHtml(content: string) {
-  return { __html: content };
-}
+import _ from "lodash";
+import MarkdownEditor from "./components/MarkdwonEditor";
+import MarkdwonView from "./components/MarkdwonView";
 
 function App() {
-  const [content, setContent] = useState("");
+  const [viewContent, setViewContent] = useState("");
 
-  async function openFile() {
-    const result = await open({
-      multiple: false,
-      filters: [
-        {
-          name: "Markdown",
-          extensions: ["md"],
-        },
-      ],
+  const handleChange = _.debounce((content: string) => {
+    invoke<string>("parse_md_str", { content }).then((content) => {
+      setViewContent(content);
     });
-    console.log(result);
-    if (result) {
-      const path = result as string;
-      await invoke<string>("parse_md", { path });
-    }
-  }
-
-  useEffect(() => {
-    listen<string>("md_parsed", (event) => {
-      setContent(event.payload);
-    });
-  }, [content]);
+  }, 100);
 
   return (
-    <>
-      <button onClick={openFile}>Open</button>
-      <article
-        className="markdown-body"
-        dangerouslySetInnerHTML={makeHtml(content)}
-      />
-    </>
+    <div className="flex flex-row p-[1rem] h-screen overflow-y-hidden">
+      <div className="view w-1/2 h-full overflow-y-auto bg-gray-100">
+        <MarkdownEditor onChange={handleChange} />
+      </div>
+      <div className="view w-1/2 h-full overflow-y-auto">
+        <MarkdwonView content={viewContent} />
+      </div>
+    </div>
   );
 }
 
