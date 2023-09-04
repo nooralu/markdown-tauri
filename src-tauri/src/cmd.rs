@@ -1,7 +1,7 @@
 use serde::Serialize;
 use tauri::{command, AppHandle, Manager};
 
-use crate::parser::{FilePathTx, md_to_html};
+use crate::parser::{md_to_html, FilePathTx};
 
 pub fn send_to_js<R: tauri::Runtime, S>(event: &str, payload: S, manager: &AppHandle<R>)
 where
